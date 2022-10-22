@@ -15,6 +15,6 @@ pub fn get_name(num: u32) -> String {
         14 => "ten trillion".to_string(),
         15 => "hundred trillion".to_string(),
         16 => "quadrillion".to_string(),
-        _ => "ERR".to_string()
+        _ => "ERR".to_string(),
     }
 }
