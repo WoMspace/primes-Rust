@@ -8,17 +8,21 @@ struct Args {
     #[arg(short = 'c', long)]
     max_candidate: Option<u32>,
 
-    /// The number of primes to search for.
-    #[arg(short = 'g', long = "goal", default_value_t = 1_000_000)]
-    prime_goal: u32,
+    /// Limit the number of primes to search for.
+    #[arg(short = 'g', long = "goal")]
+    prime_goal: Option<u32>,
 
     /// How often to report major statistics. Set to 0 to disable.
-    #[arg(short = 'm', long = "major", default_value_t = 1_000_000)]
+    #[arg(short = 'm', long = "major", default_value_t = 10_000_000)]
     major_interval: u32,
 
     /// How often to report minor statistics. Set to 0 to disable.
-    #[arg(short = 'n', long = "minor", default_value_t = 10_000)]
+    #[arg(short = 'n', long = "minor", default_value_t = 100_000)]
     minor_interval: u32,
+    
+    /// How often to print the table header. Set to 0 to disable.
+    #[arg(short = 'i', long = "header", default_value_t = 50)]
+    header_interval: u32,
 }
 
 fn main() {
@@ -27,9 +31,14 @@ fn main() {
     let mut primes: Vec<u32> = vec![3];
 
     let loop_end: u32 = args.max_candidate.unwrap_or(u32::MAX);
+    
+    let mut table_header = 0;
 
     let mut major_timer = Stopwatch::start_new();
     let mut minor_timer = Stopwatch::start_new();
+    if args.minor_interval != 0 {
+        header(1);
+    }
 
     for candidate in (5..loop_end).step_by(2) {
         if check_prime(candidate, &primes) {
@@ -41,10 +50,12 @@ fn main() {
                     major_report(args.major_interval, &mut major_timer, candidate);
                     minor_timer.restart();
                 } else if args.minor_interval != 0 && len % args.minor_interval == 0 {
+                    if table_header > args.header_interval { header(args.header_interval); table_header = 1; }
                     minor_report(args.minor_interval, &mut minor_timer, primes.len(), &primes);
+                    table_header += 1;
                 }
             }
-            if primes.len() as u32 >= args.prime_goal {
+            if primes.len() as u32 >= args.prime_goal.unwrap_or(u32::MAX) {
                 break;
             }
         }
@@ -83,7 +94,7 @@ fn main() {
             time = format!("{:.2}s", minor_timer.elapsed().as_secs_f32())
         }
 
-        println!("{} | {} | {}", nth, prime, time);
+        println!(" {nth:<5} | {prime:<10} | {time:<5}");
         minor_timer.restart();
     }
     fn major_report(major_interval: u32, major_timer: &mut Stopwatch, last_prime: u32) {
@@ -99,5 +110,14 @@ fn main() {
         println!("Last {} took {}s", last_text, timer_text);
         println!("Last {}th prime is {}", last_text, last_prime);
         println!("Average speed: {} primes/second", avg_text);
+    }
+    
+    fn header(interval: u32) {
+        if interval == 0 {return;}
+        else {
+            println!("-------|------------|------");
+            println!(" {:5} | {:10} | {:5}", "Nth", "Prime", "Time");
+            println!("-------|------------|------");
+        }
     }
 }
