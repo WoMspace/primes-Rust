@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.0.18", features = ["derive"] }
 stopwatch = "0.0.7"
+ctrlc = "3.2.3"
